@@ -223,7 +223,7 @@ export default function DashboardPage() {
                         value={concertName}
                         onChange={(e) => setConcertName(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder=""
+                        placeholder="Please input concert name"
                       />
                     </div>
 
@@ -239,7 +239,7 @@ export default function DashboardPage() {
                           value={totalSeats}
                           onChange={(e) => setTotalSeats(e.target.value)}
                           className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          placeholder="100"
+                          placeholder="500"
                         />
                         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                           <Users size={18} className="text-gray-400" />
