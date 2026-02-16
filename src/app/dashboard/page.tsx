@@ -1,0 +1,335 @@
+"use client";
+
+import { useState } from "react";
+import { Home, History, Users, LogOut, Armchair, Trash2 } from "lucide-react";
+
+export default function DashboardPage() {
+  const [activeTab, setActiveTab] = useState("overview");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [concertName, setConcertName] = useState("");
+  const [totalSeats, setTotalSeats] = useState("");
+  const [description, setDescription] = useState("");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedConcert, setSelectedConcert] = useState<{id: number, name: string} | null>(null);
+
+  const openDeleteModal = (concert: {id: number, name: string}) => {
+    setSelectedConcert(concert);
+    setIsDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setSelectedConcert(null);
+  };
+
+  const handleDelete = () => {
+    // Add delete logic here
+    console.log("Deleting concert:", selectedConcert);
+    closeDeleteModal();
+  };
+
+  const concerts = [
+    {
+      id: 1,
+      name: "Concert Name 1",
+      description: "Lorem ipsum dolor sit amet consectetur. Elit in quos amet mauris porttitor nibh urna sit ornare a. Phan dolor noids ut ornare senean nun. Fusce dignisim lorem sed non est ors sem in hendrerit purus nune sed donec commodo modn enim scelerisque.",
+      seats: 500,
+    },
+    {
+      id: 2,
+      name: "Concert Name 2",
+      description: "Lorem ipsum dolor sit amet consectetur. Elit in quos amet mauris porttitor nibh urna sit ornare a.",
+      seats: 200,
+    },
+  ];
+
+  return (
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar */}
+      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-200 ease-in-out`}>
+        <div className="flex flex-col h-full">
+          {/* Header */}
+          <div className="p-6 border-b border-gray-200">
+            <h1 className="text-2xl font-bold text-gray-800">Admin</h1>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 p-4 space-y-2">
+            <a
+              href="/dashboard"
+              className="flex items-center gap-3 px-4 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              <Home size={20} />
+              <span>Home</span>
+            </a>
+            <a
+              href="/history"
+              className="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <History size={20} />
+              <span>History</span>
+            </a>
+            <a
+              href="#"
+              className="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <Users size={20} />
+              <span>Switch to user</span>
+            </a>
+          </nav>
+
+          {/* Logout */}
+          <div className="p-4 border-t border-gray-200">
+            <button className="flex items-center gap-3 px-4 py-3 w-full text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
+              <LogOut size={20} />
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Overlay for mobile */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main Content */}
+      <main className="flex-1 w-full lg:w-auto">
+        {/* Mobile Menu Button */}
+        <div className="lg:hidden p-4 bg-white border-b border-gray-200">
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-4 md:p-8 max-w-8xl mx-auto">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
+            {/* Total of seats */}
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 text-white shadow-lg">
+              <div className="flex items-center justify-center mb-2">
+                <Armchair size={24} />
+              </div>
+              <div className="text-center">
+                <p className="text-sm opacity-90 mb-1">Total of seats</p>
+                <p className="text-4xl font-bold">500</p>
+              </div>
+            </div>
+
+            {/* Queue */}
+            <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg p-6 text-white shadow-lg">
+              <div className="flex items-center justify-center mb-2">
+                <Users size={24} />
+              </div>
+              <div className="text-center">
+                <p className="text-sm opacity-90 mb-1">Queue</p>
+                <p className="text-4xl font-bold">120</p>
+              </div>
+            </div>
+
+            {/* Cancel */}
+            <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-lg p-6 text-white shadow-lg">
+              <div className="flex items-center justify-center mb-2">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <p className="text-sm opacity-90 mb-1">Cancel</p>
+                <p className="text-4xl font-bold">12</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="border-b border-gray-200">
+              <div className="flex">
+                <button
+                  onClick={() => setActiveTab("overview")}
+                  className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === "overview"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-600 hover:text-gray-800"
+                  }`}
+                >
+                  Overview
+                </button>
+                <button
+                  onClick={() => setActiveTab("create")}
+                  className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === "create"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-gray-600 hover:text-gray-800"
+                  }`}
+                >
+                  Create
+                </button>
+              </div>
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === "overview" ? (
+              /* Concert List */
+              <div className="p-4 md:p-6 space-y-4">
+                {concerts.map((concert) => (
+                  <div
+                    key={concert.id}
+                    className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 hover:shadow-md transition-shadow"
+                  >
+                    <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                      {concert.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+                      {concert.description}
+                    </p>
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Armchair size={18} />
+                        <span className="text-sm font-medium">{concert.seats}</span>
+                      </div>
+                      <button 
+                        onClick={() => openDeleteModal({id: concert.id, name: concert.name})}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors"
+                      >
+                        <Trash2 size={16} />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* Create Form */
+              <div className="p-4 md:p-6">
+                <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Concert Name */}
+                    <div>
+                      <label htmlFor="concertName" className="block text-sm font-medium text-gray-700 mb-2">
+                        Concert Name
+                      </label>
+                      <input
+                        type="text"
+                        id="concertName"
+                        value={concertName}
+                        onChange={(e) => setConcertName(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder=""
+                      />
+                    </div>
+
+                    {/* Total of seat */}
+                    <div>
+                      <label htmlFor="totalSeats" className="block text-sm font-medium text-gray-700 mb-2">
+                        Total of seat
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          id="totalSeats"
+                          value={totalSeats}
+                          onChange={(e) => setTotalSeats(e.target.value)}
+                          className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="100"
+                        />
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                          <Users size={18} className="text-gray-400" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                      Description
+                    </label>
+                    <textarea
+                      id="description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={6}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      placeholder="Please input description"
+                    />
+                  </div>
+
+                  {/* Save Button */}
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      className="flex items-center gap-2 px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                      </svg>
+                      Save
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Overlay */}
+          <div 
+            className="absolute inset-0 bg-opacity-10 backdrop-blur-[2px]"
+            onClick={closeDeleteModal}
+          />
+          
+          {/* Modal Content */}
+          <div className="relative bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4 z-10">
+            {/* Icon */}
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+            </div>
+            
+            {/* Text */}
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Are you sure to delete?
+              </h3>
+              <p className="text-sm text-gray-600">
+                &quot;{selectedConcert?.name}&quot;
+              </p>
+            </div>
+            
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={closeDeleteModal}
+                className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
