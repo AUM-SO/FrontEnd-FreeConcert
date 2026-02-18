@@ -1,16 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Home, History, Users, LogOut, Armchair, Trash2 } from "lucide-react";
+import { eventsApi, Event } from "@/lib/api";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function DashboardPage() {
+  const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [concertName, setConcertName] = useState("");
   const [totalSeats, setTotalSeats] = useState("");
   const [description, setDescription] = useState("");
+  const [concertDate, setConcertDate] = useState("");
+  const [venueId, setVenueId] = useState("1");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedConcert, setSelectedConcert] = useState<{id: number, name: string} | null>(null);
+  const [concerts, setConcerts] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // Fetch events on component mount
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const response = await eventsApi.getAll();
+      setConcerts(response.data);
+      setError("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch events");
+      console.error("Error fetching events:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+  };
 
   const openDeleteModal = (concert: {id: number, name: string}) => {
     setSelectedConcert(concert);
@@ -22,26 +54,56 @@ export default function DashboardPage() {
     setSelectedConcert(null);
   };
 
-  const handleDelete = () => {
-    // Add delete logic here
-    console.log("Deleting concert:", selectedConcert);
-    closeDeleteModal();
+  const handleDelete = async () => {
+    if (!selectedConcert) return;
+    
+    try {
+      await eventsApi.delete(selectedConcert.id);
+      setSuccessMessage(`Successfully deleted "${selectedConcert.name}"`);
+      setTimeout(() => setSuccessMessage(""), 3000);
+      closeDeleteModal();
+      fetchEvents(); // Refresh the list
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete event");
+      console.error("Error deleting event:", err);
+    }
   };
 
-  const concerts = [
-    {
-      id: 1,
-      name: "Concert Name 1",
-      description: "Lorem ipsum dolor sit amet consectetur. Elit in quos amet mauris porttitor nibh urna sit ornare a. Phan dolor noids ut ornare senean nun. Fusce dignisim lorem sed non est ors sem in hendrerit purus nune sed donec commodo modn enim scelerisque.",
-      seats: 500,
-    },
-    {
-      id: 2,
-      name: "Concert Name 2",
-      description: "Lorem ipsum dolor sit amet consectetur. Elit in quos amet mauris porttitor nibh urna sit ornare a.",
-      seats: 200,
-    },
-  ];
+  const handleCreateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!concertName || !totalSeats || !description || !concertDate) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    try {
+      await eventsApi.create({
+        name: concertName,
+        description,
+        date: new Date(concertDate).toISOString(),
+        venueId: parseInt(venueId),
+        totalSeats: parseInt(totalSeats),
+      });
+
+      setSuccessMessage("Event created successfully!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+      
+      // Reset form
+      setConcertName("");
+      setTotalSeats("");
+      setDescription("");
+      setConcertDate("");
+      setVenueId("1");
+      
+      // Switch to overview tab and refresh
+      setActiveTab("overview");
+      fetchEvents();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create event");
+      console.error("Error creating event:", err);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -80,7 +142,10 @@ export default function DashboardPage() {
 
           {/* Logout */}
           <div className="p-4 border-t border-gray-200">
-            <button className="flex items-center gap-3 px-4 py-3 w-full text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
+            <button 
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-4 py-3 w-full text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+            >
               <LogOut size={20} />
               <span>Logout</span>
             </button>
@@ -111,16 +176,29 @@ export default function DashboardPage() {
         </div>
 
         <div className="p-4 md:p-8 max-w-8xl mx-auto">
+          {/* Success/Error Messages */}
+          {successMessage && (
+            <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
+              {successMessage}
+            </div>
+          )}
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+              {error}
+            </div>
+          )}
+
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
-            {/* Total of seats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">{/* Total of seats */}
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 text-white shadow-lg">
               <div className="flex items-center justify-center mb-2">
                 <Armchair size={24} />
               </div>
               <div className="text-center">
                 <p className="text-sm opacity-90 mb-1">Total of seats</p>
-                <p className="text-4xl font-bold">500</p>
+                <p className="text-4xl font-bold">
+                  {concerts.reduce((sum, c) => sum + (c.totalSeats || 0), 0)}
+                </p>
               </div>
             </div>
 
@@ -180,37 +258,62 @@ export default function DashboardPage() {
             {activeTab === "overview" ? (
               /* Concert List */
               <div className="p-4 md:p-6 space-y-4">
-                {concerts.map((concert) => (
-                  <div
-                    key={concert.id}
-                    className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 hover:shadow-md transition-shadow"
-                  >
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                      {concert.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-3">
-                      {concert.description}
-                    </p>
-                    <div className="flex items-center justify-between flex-wrap gap-3">
-                      <div className="flex items-center gap-2 text-gray-700">
-                        <Armchair size={18} />
-                        <span className="text-sm font-medium">{concert.seats}</span>
-                      </div>
-                      <button 
-                        onClick={() => openDeleteModal({id: concert.id, name: concert.name})}
-                        className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors"
-                      >
-                        <Trash2 size={16} />
-                        Delete
-                      </button>
-                    </div>
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <p className="mt-2 text-gray-600">Loading events...</p>
                   </div>
-                ))}
+                ) : concerts.length === 0 ? (
+                  <div className="text-center py-8 text-gray-600">
+                    No events found. Create your first event!
+                  </div>
+                ) : (
+                  concerts.map((concert) => (
+                    <div
+                      key={concert.id}
+                      className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 hover:shadow-md transition-shadow"
+                    >
+                      <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                        {concert.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {concert.description}
+                      </p>
+                      <p className="text-xs text-gray-500 mb-4">
+                        Date: {new Date(concert.date).toLocaleString()}
+                      </p>
+                      <div className="flex items-center justify-between flex-wrap gap-3">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2 text-gray-700">
+                            <Armchair size={18} />
+                            <span className="text-sm font-medium">
+                              {concert.availableSeats}/{concert.totalSeats}
+                            </span>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            concert.status === 'active' 
+                              ? 'bg-green-100 text-green-700' 
+                              : 'bg-gray-100 text-gray-700'
+                          }`}>
+                            {concert.status}
+                          </span>
+                        </div>
+                        <button 
+                          onClick={() => openDeleteModal({id: concert.id, name: concert.name})}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                          <Trash2 size={16} />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             ) : (
               /* Create Form */
               <div className="p-4 md:p-6">
-                <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+                <form className="space-y-6" onSubmit={handleCreateEvent}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Concert Name */}
                     <div>
@@ -224,6 +327,7 @@ export default function DashboardPage() {
                         onChange={(e) => setConcertName(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Please input concert name"
+                        required
                       />
                     </div>
 
@@ -240,11 +344,43 @@ export default function DashboardPage() {
                           onChange={(e) => setTotalSeats(e.target.value)}
                           className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           placeholder="500"
+                          required
                         />
                         <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                           <Users size={18} className="text-gray-400" />
                         </div>
                       </div>
+                    </div>
+
+                    {/* Concert Date */}
+                    <div>
+                      <label htmlFor="concertDate" className="block text-sm font-medium text-gray-700 mb-2">
+                        Concert Date
+                      </label>
+                      <input
+                        type="datetime-local"
+                        id="concertDate"
+                        value={concertDate}
+                        onChange={(e) => setConcertDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+
+                    {/* Venue ID */}
+                    <div>
+                      <label htmlFor="venueId" className="block text-sm font-medium text-gray-700 mb-2">
+                        Venue ID
+                      </label>
+                      <input
+                        type="number"
+                        id="venueId"
+                        value={venueId}
+                        onChange={(e) => setVenueId(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="1"
+                        required
+                      />
                     </div>
                   </div>
 
@@ -260,6 +396,7 @@ export default function DashboardPage() {
                       rows={6}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                       placeholder="Please input description"
+                      required
                     />
                   </div>
 

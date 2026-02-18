@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Ticket, User } from "lucide-react";
+import { Ticket, User, LogOut } from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -11,8 +11,11 @@ import {
   NavigationMenuTrigger,
   NavigationMenuContent,
 } from "./ui/navigation-menu";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function Navbar() {
+  const { user, logout } = useAuth();
+
   const menulist: { title: string; href: string; description: string }[] = [
     {
       title: "Browse Concerts",
@@ -107,18 +110,33 @@ export default function Navbar() {
 
         {/* Auth Buttons */}
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/login" className="flex items-center">
-              <User className="h-4 w-4 mr-2" />
-              Login
-            </Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="/signup" className="flex items-center">
-              <Ticket className="h-4 w-4 mr-2" />
-              Sign Up
-            </Link>
-          </Button>
+          {user ? (
+            <>
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                <User className="h-4 w-4 inline mr-1" />
+                {user.name}
+              </span>
+              <Button variant="ghost" size="sm" onClick={() => logout()}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/login" className="flex items-center">
+                  <User className="h-4 w-4 mr-2" />
+                  Login
+                </Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link href="/signup" className="flex items-center">
+                  <Ticket className="h-4 w-4 mr-2" />
+                  Sign Up
+                </Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </nav>

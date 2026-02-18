@@ -1,27 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Home, History, Users, LogOut } from "lucide-react";
+import { bookingsApi, Booking } from "@/lib/api";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function HistoryPage() {
+  const { logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const historyData = [
-    {
-      id: 1,
-      dateTime: "12/09/2024 15:00:00",
-      username: "sara.john",
-      concertName: "The festival int 2024",
-      action: "Cancel",
-    },
-    {
-      id: 2,
-      dateTime: "12/09/2024 10:39:20",
-      username: "sara.john",
-      concertName: "The festival int 2024",
-      action: "Reserve",
-    },
-  ];
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      const data = await bookingsApi.getAll();
+      setBookings(data);
+      setError("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch bookings");
+      console.error("Error fetching bookings:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -60,7 +71,10 @@ export default function HistoryPage() {
 
           {/* Logout */}
           <div className="p-4 border-t border-gray-200">
-            <button className="flex items-center gap-3 px-4 py-3 w-full text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
+            <button 
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-4 py-3 w-full text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+            >
               <LogOut size={20} />
               <span>Logout</span>
             </button>
@@ -91,70 +105,119 @@ export default function HistoryPage() {
         </div>
 
         <div className="p-4 md:p-8 max-w-8xl mx-auto">
+          {/* Error Message */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+              {error}
+            </div>
+          )}
+
           {/* History Table */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             {/* Table for larger screens */}
             <div className="hidden md:block overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
-                      Date time
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
-                      Username
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
-                      Concert name
-                    </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {historyData.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {item.dateTime}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {item.username}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {item.concertName}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">
-                        {item.action}
-                      </td>
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <p className="mt-2 text-gray-600">Loading bookings...</p>
+                </div>
+              ) : bookings.length === 0 ? (
+                <div className="text-center py-12 text-gray-600">
+                  No booking history found.
+                </div>
+              ) : (
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                        Date time
+                      </th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                        Username
+                      </th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                        Concert name
+                      </th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                        Status
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {bookings.map((booking) => (
+                      <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {new Date(booking.createdAt).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {booking.user?.name || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {booking.event?.name || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            booking.status === 'confirmed' 
+                              ? 'bg-green-100 text-green-700' 
+                              : booking.status === 'cancelled'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {booking.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
 
             {/* Cards for mobile screens */}
             <div className="md:hidden divide-y divide-gray-200">
-              {historyData.map((item) => (
-                <div key={item.id} className="p-4 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <span className="text-xs font-medium text-gray-500">Date time</span>
-                    <span className="text-sm text-gray-900">{item.dateTime}</span>
-                  </div>
-                  <div className="flex justify-between items-start">
-                    <span className="text-xs font-medium text-gray-500">Username</span>
-                    <span className="text-sm text-gray-900">{item.username}</span>
-                  </div>
-                  <div className="flex justify-between items-start">
-                    <span className="text-xs font-medium text-gray-500">Concert name</span>
-                    <span className="text-sm text-gray-900">{item.concertName}</span>
-                  </div>
-                  <div className="flex justify-between items-start">
-                    <span className="text-xs font-medium text-gray-500">Action</span>
-                    <span className="text-sm text-gray-900">{item.action}</span>
-                  </div>
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <p className="mt-2 text-gray-600">Loading bookings...</p>
                 </div>
-              ))}
+              ) : bookings.length === 0 ? (
+                <div className="text-center py-12 text-gray-600">
+                  No booking history found.
+                </div>
+              ) : (
+                bookings.map((booking) => (
+                  <div key={booking.id} className="p-4 space-y-2">
+                    <div className="flex justify-between items-start">
+                      <span className="text-xs font-medium text-gray-500">Date time</span>
+                      <span className="text-sm text-gray-900">
+                        {new Date(booking.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-start">
+                      <span className="text-xs font-medium text-gray-500">Username</span>
+                      <span className="text-sm text-gray-900">
+                        {booking.user?.name || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-start">
+                      <span className="text-xs font-medium text-gray-500">Concert name</span>
+                      <span className="text-sm text-gray-900">{booking.event?.name || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between items-start">
+                      <span className="text-xs font-medium text-gray-500">Status</span>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        booking.status === 'confirmed' 
+                          ? 'bg-green-100 text-green-700' 
+                          : booking.status === 'cancelled'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {booking.status}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

@@ -16,9 +16,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Ticket, Mail, Lock, AlertCircle } from "lucide-react";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,24 +32,16 @@ export default function LoginPage() {
     setError("");
 
     try {
-      console.log("email, password ", email, password);
+      const user = await login(email, password);
 
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (response.ok) {
-        router.push("/home");
+      // Redirect based on user role
+      if (user.role === 'admin') {
+        router.push("/dashboard");
       } else {
-        const data = await response.json();
-        setError(data.message || "เข้าสู่ระบบล้มเหลว กรุณาลองใหม่อีกครั้ง");
+        router.push("/home");
       }
-    } catch {
-      setError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "เข้าสู่ระบบล้มเหลว กรุณาลองใหม่อีกครั้ง");
     } finally {
       setLoading(false);
     }
