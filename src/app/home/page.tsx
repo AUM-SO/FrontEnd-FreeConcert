@@ -37,7 +37,7 @@ export default function HomePage() {
 
     console.log('concert --> ', concert);
 
-    if (concert.availableSeats >= concert.totalSeats) {
+    if (concert.availableSeats <= 0) {
       setSuccessMessage("");
       setError("ที่นั่งเต็มแล้ว");
       return;
@@ -49,7 +49,7 @@ export default function HomePage() {
       setReservingId(concert.id);
 
       // Fetch available seats and pick the first one
-      const availableSeats = await eventsApi.getSeats(concert.id, "availableSeats");
+      const availableSeats = await eventsApi.getSeats(concert.id, "available");
       // console.log('availableSeats for concert', concert.id, availableSeats);
       
       if (availableSeats.length === 0) {
@@ -211,14 +211,13 @@ export default function HomePage() {
                         <div className="flex items-center gap-2 text-gray-700">
                           <Armchair size={18} />
                           <span className="text-sm font-medium">
-                            {(concert.totalSeats || 0) -
-                              (concert.availableSeats || 0)}
-                            /{concert.totalSeats}
+                            {concert?.availableSeats}
+                            /{concert?.totalSeats}
                           </span>
                         </div>
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            concert.status === "published"
+                            concert?.status === "published"
                               ? "bg-green-100 text-green-700"
                               : "bg-gray-100 text-gray-700"
                           }`}
@@ -229,7 +228,7 @@ export default function HomePage() {
                       <button
                         onClick={() => handleReserve(concert)}
                         disabled={
-                          concert.availableSeats == concert.totalSeats ||
+                          concert.availableSeats <= 0 ||
                           concert.status !== "published" ||
                           reservingId !== null
                         }
@@ -238,7 +237,7 @@ export default function HomePage() {
                         <Ticket size={16} />
                         {reservingId === concert.id
                           ? "Reserving..."
-                          : concert.availableSeats == concert.totalSeats
+                          : concert.availableSeats <= 0
                             ? "Full"
                             : "Reserve"}
                       </button>
