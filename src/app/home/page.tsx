@@ -33,23 +33,37 @@ export default function HomePage() {
   };
 
   const handleReserve = async (concert: Event) => {
+    if (reservingId !== null) return;
+
     if (concert.availableSeats <= 0) {
+      setSuccessMessage("");
       setError("ที่นั่งเต็มแล้ว");
       return;
     }
 
     try {
       setError("");
+      setSuccessMessage("");
       setReservingId(concert.id);
+
+      // Fetch available seats and pick the first one
+      const availableSeats = await eventsApi.getSeats(concert.id, "available");
+      if (availableSeats.length === 0) {
+        setError("ไม่มีที่นั่งว่างแล้ว");
+        return;
+      }
+
       await bookingsApi.create({
         eventId: concert.id,
-        seatId: 1,
+        seatId: availableSeats[0].id,
       });
       setSuccessMessage(`จองที่นั่ง "${concert.title}" สำเร็จ!`);
       setTimeout(() => setSuccessMessage(""), 3000);
       fetchEvents();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "จองที่นั่งล้มเหลว กรุณาลองใหม่");
+      setError(
+        err instanceof Error ? err.message : "จองที่นั่งล้มเหลว กรุณาลองใหม่",
+      );
       console.error("Error reserving:", err);
     } finally {
       setReservingId(null);
@@ -70,9 +84,7 @@ export default function HomePage() {
           {/* Header */}
           <div className="p-6 border-b border-gray-200">
             <h1 className="text-2xl font-bold text-gray-800">FreeConcert</h1>
-            {user && (
-              <p className="text-sm text-gray-500 mt-1">{user.name}</p>
-            )}
+            {user && <p className="text-sm text-gray-500 mt-1">{user.name}</p>}
           </div>
 
           {/* Navigation */}
@@ -163,7 +175,9 @@ export default function HomePage() {
           {/* Concert List */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="border-b border-gray-200 px-6 py-4">
-              <h2 className="text-lg font-semibold text-gray-800">Available Concerts</h2>
+              <h2 className="text-lg font-semibold text-gray-800">
+                Available Concerts
+              </h2>
             </div>
 
             <div className="p-4 md:p-6 space-y-4">
@@ -193,7 +207,9 @@ export default function HomePage() {
                         <div className="flex items-center gap-2 text-gray-700">
                           <Armchair size={18} />
                           <span className="text-sm font-medium">
-                            {concert.totalSeats}
+                            {(concert.totalSeats || 0) -
+                              (concert.availableSeats || 0)}
+                            /{concert.totalSeats}
                           </span>
                         </div>
                         <span
@@ -208,15 +224,23 @@ export default function HomePage() {
                       </div>
                       <button
                         onClick={() => handleReserve(concert)}
-                        disabled={concert.availableSeats <= 0 || concert.status !== "active" || reservingId === concert.id}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+                        disabled={
+                          concert.availableSeats === 0 ||
+                          concert.status !== "active" ||
+                          reservingId !== null
+                        }
+                        className={
+                          concert.availableSeats === 0
+                            ? `flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors`
+                            : `flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors`
+                        }
                       >
                         <Ticket size={16} />
                         {reservingId === concert.id
                           ? "Reserving..."
-                          : concert.availableSeats <= 0
-                          ? "Full"
-                          : "Reserve"}
+                          : concert.availableSeats === 0
+                            ? "Full"
+                            : "Reserve"}
                       </button>
                     </div>
                   </div>

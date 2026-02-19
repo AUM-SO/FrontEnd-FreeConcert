@@ -10,9 +10,10 @@ import type {
   EventsResponse,
   Booking,
   CreateBookingRequest,
+  Seat,
 } from '@/types/api';
 
-export type { LoginRequest, RegisterRequest, User, AuthResponse, Event, CreateEventRequest, QueryEventParams, EventsResponse, Booking, CreateBookingRequest };
+export type { LoginRequest, RegisterRequest, User, AuthResponse, Event, CreateEventRequest, QueryEventParams, EventsResponse, Booking, CreateBookingRequest, Seat };
 
 const API_BASE_URL = '/api';
 
@@ -186,6 +187,11 @@ export const eventsApi = {
 
   getById: async (id: number): Promise<Event> => {
     return apiRequest<Event>(`/events/${id}`);
+  },
+
+  getSeats: async (eventId: number, status?: string): Promise<Seat[]> => {
+    const query = status ? `?status=${status}` : '';
+    return apiRequest<Seat[]>(`/events/${eventId}/seats${query}`);
   },
 
   create: async (data: CreateEventRequest): Promise<Event> => {

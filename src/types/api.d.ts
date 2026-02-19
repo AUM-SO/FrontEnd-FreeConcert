@@ -91,3 +91,19 @@ export interface CreateBookingRequest {
   eventId: number;
   seatId: number;
 }
+
+// ============================================
+// Seats Types
+// ============================================
+
+export interface Seat {
+  id: number;
+  venueId: number;
+  eventId: number;
+  section: string;
+  row: string;
+  number: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+}
