@@ -112,6 +112,7 @@ export const authApi = {
   },
 
   logout: async (): Promise<void> => {
+    await apiRequest('/auth/logout', { method: 'POST' }).catch(() => {});
     tokenStorage.remove();
   },
 

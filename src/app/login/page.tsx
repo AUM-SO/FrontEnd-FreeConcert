@@ -38,7 +38,7 @@ export default function LoginPage() {
       if (user.role === 'admin') {
         router.push("/dashboard");
       } else {
-        router.push("/home");
+        router.push("/");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "เข้าสู่ระบบล้มเหลว กรุณาลองใหม่อีกครั้ง");
