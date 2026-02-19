@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Home, History, Users, LogOut } from "lucide-react";
+import { Home, History, Users, LogOut, XCircle } from "lucide-react";
 import { bookingsApi, Booking } from "@/lib/api";
 import { useAuth } from "@/contexts/auth-context";
 
@@ -12,6 +12,8 @@ export default function HistoryPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchBookings();
@@ -28,6 +30,27 @@ export default function HistoryPage() {
       console.error("Error fetching bookings:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancel = async (bookingId: number) => {
+    if (cancellingId !== null) return;
+
+    try {
+      setError("");
+      setSuccessMessage("");
+      setCancellingId(bookingId);
+      await bookingsApi.cancel(bookingId);
+      setSuccessMessage("ยกเลิกการจองสำเร็จ!");
+      setTimeout(() => setSuccessMessage(""), 3000);
+      fetchBookings();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "ยกเลิกการจองล้มเหลว กรุณาลองใหม่"
+      );
+      console.error("Error cancelling booking:", err);
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -113,7 +136,12 @@ export default function HistoryPage() {
         </div>
 
         <div className="p-4 md:p-8 max-w-8xl mx-auto">
-          {/* Error Message */}
+          {/* Success/Error Messages */}
+          {successMessage && (
+            <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
+              {successMessage}
+            </div>
+          )}
           {error && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
               {error}
@@ -149,6 +177,9 @@ export default function HistoryPage() {
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
                         Status
                       </th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                        Action
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -165,14 +196,26 @@ export default function HistoryPage() {
                         </td>
                         <td className="px-6 py-4 text-sm">
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            booking.status === 'confirmed' 
-                              ? 'bg-green-100 text-green-700' 
+                            booking.status === 'confirmed'
+                              ? 'bg-green-100 text-green-700'
                               : booking.status === 'cancelled'
                               ? 'bg-red-100 text-red-700'
                               : 'bg-yellow-100 text-yellow-700'
                           }`}>
                             {booking.status}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          {booking.status === 'confirmed' && (
+                            <button
+                              onClick={() => handleCancel(booking.id)}
+                              disabled={cancellingId !== null}
+                              className="flex items-center gap-1 px-3 py-1.5 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-xs font-medium rounded-lg transition-colors"
+                            >
+                              <XCircle size={14} />
+                              {cancellingId === booking.id ? "Cancelling..." : "Cancel"}
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -214,8 +257,8 @@ export default function HistoryPage() {
                     <div className="flex justify-between items-start">
                       <span className="text-xs font-medium text-gray-500">Status</span>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        booking.status === 'confirmed' 
-                          ? 'bg-green-100 text-green-700' 
+                        booking.status === 'confirmed'
+                          ? 'bg-green-100 text-green-700'
                           : booking.status === 'cancelled'
                           ? 'bg-red-100 text-red-700'
                           : 'bg-yellow-100 text-yellow-700'
@@ -223,6 +266,18 @@ export default function HistoryPage() {
                         {booking.status}
                       </span>
                     </div>
+                    {booking.status === 'confirmed' && (
+                      <div className="pt-2">
+                        <button
+                          onClick={() => handleCancel(booking.id)}
+                          disabled={cancellingId !== null}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-xs font-medium rounded-lg transition-colors w-full justify-center"
+                        >
+                          <XCircle size={14} />
+                          {cancellingId === booking.id ? "Cancelling..." : "Cancel Booking"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))
               )}

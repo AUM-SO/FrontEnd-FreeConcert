@@ -35,7 +35,9 @@ export default function HomePage() {
   const handleReserve = async (concert: Event) => {
     if (reservingId !== null) return;
 
-    if (concert.availableSeats <= 0) {
+    console.log('concert --> ', concert);
+
+    if (concert.availableSeats >= concert.totalSeats) {
       setSuccessMessage("");
       setError("ที่นั่งเต็มแล้ว");
       return;
@@ -47,7 +49,9 @@ export default function HomePage() {
       setReservingId(concert.id);
 
       // Fetch available seats and pick the first one
-      const availableSeats = await eventsApi.getSeats(concert.id, "available");
+      const availableSeats = await eventsApi.getSeats(concert.id, "availableSeats");
+      // console.log('availableSeats for concert', concert.id, availableSeats);
+      
       if (availableSeats.length === 0) {
         setError("ไม่มีที่นั่งว่างแล้ว");
         return;
@@ -214,7 +218,7 @@ export default function HomePage() {
                         </div>
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            concert.status === "active"
+                            concert.status === "published"
                               ? "bg-green-100 text-green-700"
                               : "bg-gray-100 text-gray-700"
                           }`}
@@ -225,20 +229,16 @@ export default function HomePage() {
                       <button
                         onClick={() => handleReserve(concert)}
                         disabled={
-                          concert.availableSeats === 0 ||
-                          concert.status !== "active" ||
+                          concert.availableSeats == concert.totalSeats ||
+                          concert.status !== "published" ||
                           reservingId !== null
                         }
-                        className={
-                          concert.availableSeats === 0
-                            ? `flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors`
-                            : `flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors`
-                        }
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
                       >
                         <Ticket size={16} />
                         {reservingId === concert.id
                           ? "Reserving..."
-                          : concert.availableSeats === 0
+                          : concert.availableSeats == concert.totalSeats
                             ? "Full"
                             : "Reserve"}
                       </button>
