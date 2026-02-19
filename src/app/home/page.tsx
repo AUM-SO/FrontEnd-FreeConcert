@@ -193,7 +193,7 @@ export default function HomePage() {
                         <div className="flex items-center gap-2 text-gray-700">
                           <Armchair size={18} />
                           <span className="text-sm font-medium">
-                            {concert.availableSeats}/{concert.totalSeats}
+                            {concert.totalSeats}
                           </span>
                         </div>
                         <span

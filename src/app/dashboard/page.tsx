@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Home, History, Users, LogOut, Armchair, Trash2 } from "lucide-react";
-import { eventsApi, Event } from "@/lib/api";
+import { eventsApi, bookingsApi, Event, Booking } from "@/lib/api";
 import { useAuth } from "@/contexts/auth-context";
 
 export default function DashboardPage() {
@@ -18,13 +18,15 @@ export default function DashboardPage() {
     title: string;
   } | null>(null);
   const [concerts, setConcerts] = useState<Event[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Fetch events on component mount
+  // Fetch events and bookings on component mount
   useEffect(() => {
     fetchEvents();
+    fetchBookings();
   }, []);
 
   const fetchEvents = async () => {
@@ -38,6 +40,15 @@ export default function DashboardPage() {
       console.error("Error fetching events:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBookings = async () => {
+    try {
+      const data = await bookingsApi.getAll();
+      setBookings(data);
+    } catch (err) {
+      console.error("Error fetching bookings:", err);
     }
   };
 
@@ -222,7 +233,12 @@ export default function DashboardPage() {
               </div>
               <div className="text-center">
                 <p className="text-sm opacity-90 mb-1">Reserve</p>
-                <p className="text-4xl font-bold">120</p>
+                <p className="text-4xl font-bold">
+                  {concerts.reduce((sum, c) => sum + ((c.totalSeats || 0) - (c.availableSeats || 0)), 0)}
+                  <span className="text-lg font-normal opacity-75">
+                    /{concerts.reduce((sum, c) => sum + (c.totalSeats || 0), 0)}
+                  </span>
+                </p>
               </div>
             </div>
 
@@ -245,7 +261,9 @@ export default function DashboardPage() {
               </div>
               <div className="text-center">
                 <p className="text-sm opacity-90 mb-1">Cancel</p>
-                <p className="text-4xl font-bold">12</p>
+                <p className="text-4xl font-bold">
+                  {bookings.filter((b) => b.status === "cancelled").length}
+                </p>
               </div>
             </div>
           </div>
@@ -307,7 +325,7 @@ export default function DashboardPage() {
                           <div className="flex items-center gap-2 text-gray-700">
                             <Armchair size={18} />
                             <span className="text-sm font-medium">
-                              {concert.availableSeats}/{concert.totalSeats}
+                              {concert.totalSeats}
                             </span>
                           </div>
                           <span
