@@ -1,4 +1,19 @@
 // API Client for Backend Communication
+import type {
+  LoginRequest,
+  RegisterRequest,
+  User,
+  AuthResponse,
+  Event,
+  CreateEventRequest,
+  QueryEventParams,
+  EventsResponse,
+  Booking,
+  CreateBookingRequest,
+} from '@/types/api';
+
+export type { LoginRequest, RegisterRequest, User, AuthResponse, Event, CreateEventRequest, QueryEventParams, EventsResponse, Booking, CreateBookingRequest };
+
 const API_BASE_URL = '/api';
 
 // Token management (localStorage)
@@ -63,31 +78,6 @@ async function apiRequest<T>(
 // Auth API
 // ============================================
 
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  name: string;
-  avatar?: string;
-}
-
-export interface User {
-  id: number;
-  email: string;
-  name: string;
-  role: string;
-  avatar?: string;
-}
-
-export interface AuthResponse {
-  user: User;
-  accessToken?: string;
-}
-
 export const authApi = {
   login: async (data: LoginRequest): Promise<AuthResponse> => {
     const res = await apiRequest<AuthResponse>('/auth/login', {
@@ -124,44 +114,6 @@ export const authApi = {
 // ============================================
 // Events API
 // ============================================
-
-export interface Event {
-  id: number;
-  name: string;
-  description: string;
-  date: string;
-  venueId: number;
-  availableSeats: number;
-  totalSeats: number;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateEventRequest {
-  name: string;
-  description: string;
-  date: string;
-  venueId: number;
-  totalSeats: number;
-}
-
-export interface QueryEventParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  status?: string;
-}
-
-export interface EventsResponse {
-  data: Event[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
 
 export const eventsApi = {
   getAll: async (params?: QueryEventParams): Promise<EventsResponse> => {
@@ -201,27 +153,6 @@ export const eventsApi = {
 // ============================================
 // Bookings API
 // ============================================
-
-export interface Booking {
-  id: number;
-  userId: number;
-  eventId: number;
-  seatId: number;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  event?: Event;
-  user?: {
-    id: number;
-    email: string;
-    name: string;
-  };
-}
-
-export interface CreateBookingRequest {
-  eventId: number;
-  seatId: number;
-}
 
 export const bookingsApi = {
   getAll: async (): Promise<Booking[]> => {

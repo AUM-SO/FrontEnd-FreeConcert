@@ -9,13 +9,15 @@ export default function DashboardPage() {
   const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [concertName, setConcertName] = useState("");
+  const [concertTitle, setConcertTitle] = useState("");
   const [totalSeats, setTotalSeats] = useState("");
   const [description, setDescription] = useState("");
-  const [concertDate, setConcertDate] = useState("");
   const [venueId, setVenueId] = useState("1");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedConcert, setSelectedConcert] = useState<{id: number, name: string} | null>(null);
+  const [selectedConcert, setSelectedConcert] = useState<{
+    id: number;
+    title: string;
+  } | null>(null);
   const [concerts, setConcerts] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -44,7 +46,7 @@ export default function DashboardPage() {
     logout();
   };
 
-  const openDeleteModal = (concert: {id: number, name: string}) => {
+  const openDeleteModal = (concert: { id: number; title: string }) => {
     setSelectedConcert(concert);
     setIsDeleteModalOpen(true);
   };
@@ -56,10 +58,10 @@ export default function DashboardPage() {
 
   const handleDelete = async () => {
     if (!selectedConcert) return;
-    
+
     try {
       await eventsApi.delete(selectedConcert.id);
-      setSuccessMessage(`Successfully deleted "${selectedConcert.name}"`);
+      setSuccessMessage(`Successfully deleted "${selectedConcert.title}"`);
       setTimeout(() => setSuccessMessage(""), 3000);
       closeDeleteModal();
       fetchEvents(); // Refresh the list
@@ -71,31 +73,31 @@ export default function DashboardPage() {
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!concertName || !totalSeats || !description || !concertDate) {
+
+    if (!concertTitle || !totalSeats || !description) {
       setError("Please fill in all fields");
       return;
     }
 
     try {
       await eventsApi.create({
-        name: concertName,
+        title: concertTitle,
         description,
-        date: new Date(concertDate).toISOString(),
         venueId: parseInt(venueId),
         totalSeats: parseInt(totalSeats),
       });
 
       setSuccessMessage("Event created successfully!");
       setTimeout(() => setSuccessMessage(""), 3000);
-      
+
       // Reset form
-      setConcertName("");
+      setConcertTitle("");
       setTotalSeats("");
       setDescription("");
-      setConcertDate("");
+      setStartDate("");
+      setEndDate("");
       setVenueId("1");
-      
+
       // Switch to overview tab and refresh
       setActiveTab("overview");
       fetchEvents();
@@ -108,7 +110,9 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-200 ease-in-out`}>
+      <aside
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 transition-transform duration-200 ease-in-out`}
+      >
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="p-6 border-b border-gray-200">
@@ -142,7 +146,7 @@ export default function DashboardPage() {
 
           {/* Logout */}
           <div className="p-4 border-t border-gray-200">
-            <button 
+            <button
               onClick={handleLogout}
               className="flex items-center gap-3 px-4 py-3 w-full text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
             >
@@ -169,8 +173,18 @@ export default function DashboardPage() {
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             </svg>
           </button>
         </div>
@@ -189,7 +203,8 @@ export default function DashboardPage() {
           )}
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">{/* Total of seats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
+            {/* Total of seats */}
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 text-white shadow-lg">
               <div className="flex items-center justify-center mb-2">
                 <Armchair size={24} />
@@ -216,8 +231,18 @@ export default function DashboardPage() {
             {/* Cancel */}
             <div className="bg-gradient-to-br from-red-500 to-red-600 rounded-lg p-6 text-white shadow-lg">
               <div className="flex items-center justify-center mb-2">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </div>
               <div className="text-center">
@@ -274,13 +299,10 @@ export default function DashboardPage() {
                       className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 hover:shadow-md transition-shadow"
                     >
                       <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                        {concert.name}
+                        {concert.title}
                       </h3>
                       <p className="text-sm text-gray-600 mb-2">
                         {concert.description}
-                      </p>
-                      <p className="text-xs text-gray-500 mb-4">
-                        Date: {new Date(concert.date).toLocaleString()}
                       </p>
                       <div className="flex items-center justify-between flex-wrap gap-3">
                         <div className="flex items-center gap-4">
@@ -290,16 +312,23 @@ export default function DashboardPage() {
                               {concert.availableSeats}/{concert.totalSeats}
                             </span>
                           </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            concert.status === 'active' 
-                              ? 'bg-green-100 text-green-700' 
-                              : 'bg-gray-100 text-gray-700'
-                          }`}>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              concert.status === "active"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-gray-100 text-gray-700"
+                            }`}
+                          >
                             {concert.status}
                           </span>
                         </div>
-                        <button 
-                          onClick={() => openDeleteModal({id: concert.id, name: concert.name})}
+                        <button
+                          onClick={() =>
+                            openDeleteModal({
+                              id: concert.id,
+                              title: concert.title,
+                            })
+                          }
                           className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors"
                         >
                           <Trash2 size={16} />
@@ -315,25 +344,31 @@ export default function DashboardPage() {
               <div className="p-4 md:p-6">
                 <form className="space-y-6" onSubmit={handleCreateEvent}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Concert Name */}
+                    {/* Concert Title */}
                     <div>
-                      <label htmlFor="concertName" className="block text-sm font-medium text-gray-700 mb-2">
-                        Concert Name
+                      <label
+                        htmlFor="concertTitle"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Concert Title
                       </label>
                       <input
                         type="text"
-                        id="concertName"
-                        value={concertName}
-                        onChange={(e) => setConcertName(e.target.value)}
+                        id="concertTitle"
+                        value={concertTitle}
+                        onChange={(e) => setConcertTitle(e.target.value)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Please input concert name"
+                        placeholder="Please input concert title"
                         required
                       />
                     </div>
 
                     {/* Total of seat */}
                     <div>
-                      <label htmlFor="totalSeats" className="block text-sm font-medium text-gray-700 mb-2">
+                      <label
+                        htmlFor="totalSeats"
+                        className="block text-sm font-medium text-gray-700 mb-2"
+                      >
                         Total of seat
                       </label>
                       <div className="relative">
@@ -351,42 +386,14 @@ export default function DashboardPage() {
                         </div>
                       </div>
                     </div>
-
-                    {/* Concert Date */}
-                    <div>
-                      <label htmlFor="concertDate" className="block text-sm font-medium text-gray-700 mb-2">
-                        Concert Date
-                      </label>
-                      <input
-                        type="datetime-local"
-                        id="concertDate"
-                        value={concertDate}
-                        onChange={(e) => setConcertDate(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        required
-                      />
-                    </div>
-
-                    {/* Venue ID */}
-                    <div>
-                      <label htmlFor="venueId" className="block text-sm font-medium text-gray-700 mb-2">
-                        Venue ID
-                      </label>
-                      <input
-                        type="number"
-                        id="venueId"
-                        value={venueId}
-                        onChange={(e) => setVenueId(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="1"
-                        required
-                      />
-                    </div>
                   </div>
 
                   {/* Description */}
                   <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label
+                      htmlFor="description"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
                       Description
                     </label>
                     <textarea
@@ -406,8 +413,18 @@ export default function DashboardPage() {
                       type="submit"
                       className="flex items-center gap-2 px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+                        />
                       </svg>
                       Save
                     </button>
@@ -423,32 +440,42 @@ export default function DashboardPage() {
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* Overlay */}
-          <div 
+          <div
             className="absolute inset-0 bg-opacity-10 backdrop-blur-[2px]"
             onClick={closeDeleteModal}
           />
-          
+
           {/* Modal Content */}
           <div className="relative bg-white rounded-lg shadow-xl p-6 max-w-sm w-full mx-4 z-10">
             {/* Icon */}
             <div className="flex justify-center mb-4">
               <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
-                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-8 h-8 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </div>
             </div>
-            
+
             {/* Text */}
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Are you sure to delete?
               </h3>
               <p className="text-sm text-gray-600">
-                &quot;{selectedConcert?.name}&quot;
+                &quot;{selectedConcert?.title}&quot;
               </p>
             </div>
-            
+
             {/* Buttons */}
             <div className="flex gap-3">
               <button
