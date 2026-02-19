@@ -6,8 +6,9 @@ import { bookingsApi, Booking } from "@/lib/api";
 import { useAuth } from "@/contexts/auth-context";
 
 export default function HistoryPage() {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const isAdmin = user?.role === "admin";
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -23,7 +24,7 @@ export default function HistoryPage() {
       setBookings(data);
       setError("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch bookings");
+      setError(err instanceof Error ? err.message : "โหลดข้อมูลการจองล้มเหลว");
       console.error("Error fetching bookings:", err);
     } finally {
       setLoading(false);
@@ -41,13 +42,18 @@ export default function HistoryPage() {
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="p-6 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-800">Admin</h1>
+            <h1 className="text-2xl font-bold text-gray-800">
+              {isAdmin ? "Admin" : "FreeConcert"}
+            </h1>
+            {!isAdmin && user && (
+              <p className="text-sm text-gray-500 mt-1">{user.name}</p>
+            )}
           </div>
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-2">
             <a
-              href="/dashboard"
+              href={isAdmin ? "/dashboard" : "/home"}
               className="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <Home size={20} />
@@ -60,13 +66,15 @@ export default function HistoryPage() {
               <History size={20} />
               <span>History</span>
             </a>
-            <a
-              href="#"
-              className="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <Users size={20} />
-              <span>Switch to user</span>
-            </a>
+            {isAdmin && (
+              <a
+                href="/home"
+                className="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <Users size={20} />
+                <span>Switch to user</span>
+              </a>
+            )}
           </nav>
 
           {/* Logout */}
@@ -153,7 +161,7 @@ export default function HistoryPage() {
                           {booking.user?.name || 'N/A'}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          {booking.event?.name || 'N/A'}
+                          {booking.event?.title || 'N/A'}
                         </td>
                         <td className="px-6 py-4 text-sm">
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -201,7 +209,7 @@ export default function HistoryPage() {
                     </div>
                     <div className="flex justify-between items-start">
                       <span className="text-xs font-medium text-gray-500">Concert name</span>
-                      <span className="text-sm text-gray-900">{booking.event?.name || 'N/A'}</span>
+                      <span className="text-sm text-gray-900">{booking.event?.title || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between items-start">
                       <span className="text-xs font-medium text-gray-500">Status</span>

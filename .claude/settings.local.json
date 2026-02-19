@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(git remote add:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx next build:*)"
     ]
   }
 }

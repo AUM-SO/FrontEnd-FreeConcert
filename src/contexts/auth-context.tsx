@@ -38,21 +38,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string): Promise<User> => {
-    const response = await authApi.login({ email, password });
-    setUser(response.user);
-    return response.user;
+    try {
+      const response = await authApi.login({ email, password });
+      setUser(response.user);
+      return response.user;
+    } catch (err) {
+      throw err instanceof Error ? err : new Error('เข้าสู่ระบบล้มเหลว กรุณาลองใหม่อีกครั้ง');
+    }
   };
 
   const logout = async (): Promise<void> => {
-    authApi.logout(); // clears localStorage + cookie (no network call needed)
+    try {
+      await authApi.logout();
+    } catch {
+      // Ignore logout errors - always clear local state
+    }
     setUser(null);
     router.push('/login');
   };
 
   const register = async (email: string, password: string, name: string): Promise<User> => {
-    const response = await authApi.register({ email, password, name });
-    setUser(response.user);
-    return response.user;
+    try {
+      const response = await authApi.register({ email, password, name });
+      setUser(response.user);
+      return response.user;
+    } catch (err) {
+      throw err instanceof Error ? err : new Error('ลงทะเบียนล้มเหลว กรุณาลองใหม่อีกครั้ง');
+    }
   };
 
   return (

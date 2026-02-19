@@ -36,6 +36,17 @@ export const tokenStorage = {
   },
 };
 
+// Custom error class with status code
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 // Generic API request handler
 async function apiRequest<T>(
   endpoint: string,
@@ -59,19 +70,67 @@ async function apiRequest<T>(
     });
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
+  } catch {
+    throw new ApiError(
+      'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต',
+      0
+    );
+  }
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({
-      message: 'An error occurred',
-    }));
-    throw new Error(error.message || `HTTP Error: ${response.status}`);
+    const errorBody = await response.json().catch(() => ({}));
+    const message = errorBody.message || getDefaultErrorMessage(response.status);
+
+    // Auto-logout on 401 (token expired/invalid)
+    if (response.status === 401) {
+      tokenStorage.remove();
+      if (typeof window !== 'undefined' && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
+        window.location.href = '/login';
+      }
+    }
+
+    throw new ApiError(message, response.status);
+  }
+
+  // Handle 204 No Content
+  if (response.status === 204) {
+    return undefined as T;
   }
 
   return response.json();
+}
+
+function getDefaultErrorMessage(status: number): string {
+  switch (status) {
+    case 400:
+      return 'คำขอไม่ถูกต้อง กรุณาตรวจสอบข้อมูลอีกครั้ง';
+    case 401:
+      return 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่';
+    case 403:
+      return 'คุณไม่มีสิทธิ์ในการดำเนินการนี้';
+    case 404:
+      return 'ไม่พบข้อมูลที่ร้องขอ';
+    case 409:
+      return 'ข้อมูลซ้ำกัน กรุณาตรวจสอบอีกครั้ง';
+    case 422:
+      return 'ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง';
+    case 429:
+      return 'คำขอมากเกินไป กรุณารอสักครู่แล้วลองใหม่';
+    case 500:
+      return 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์ กรุณาลองใหม่ภายหลัง';
+    case 502:
+    case 503:
+    case 504:
+      return 'เซิร์ฟเวอร์ไม่พร้อมให้บริการ กรุณาลองใหม่ภายหลัง';
+    default:
+      return `เกิดข้อผิดพลาด (${status})`;
+  }
 }
 
 // ============================================

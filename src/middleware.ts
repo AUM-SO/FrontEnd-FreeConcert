@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const protectedRoutes = ['/dashboard', '/history'];
+const protectedRoutes = ['/dashboard', '/history', '/home'];
 const authRoutes = ['/login', '/signup'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('access_token')?.value;
 
-  // Redirect root to /login
+  // Redirect root based on auth status
   if (pathname === '/') {
+    if (token) {
+      return NextResponse.redirect(new URL('/home', request.url));
+    }
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
@@ -20,10 +23,10 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Auth routes: redirect to / if already logged in
+  // Auth routes: redirect to /home if already logged in
   if (authRoutes.some((route) => pathname.startsWith(route))) {
     if (token) {
-      return NextResponse.redirect(new URL('/', request.url));
+      return NextResponse.redirect(new URL('/home', request.url));
     }
   }
 
@@ -31,5 +34,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*', '/history/:path*', '/login', '/signup'],
+  matcher: ['/', '/dashboard/:path*', '/history/:path*', '/home/:path*', '/login', '/signup'],
 };

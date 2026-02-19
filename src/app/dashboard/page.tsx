@@ -12,7 +12,6 @@ export default function DashboardPage() {
   const [concertTitle, setConcertTitle] = useState("");
   const [totalSeats, setTotalSeats] = useState("");
   const [description, setDescription] = useState("");
-  const [venueId, setVenueId] = useState("1");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedConcert, setSelectedConcert] = useState<{
     id: number;
@@ -35,7 +34,7 @@ export default function DashboardPage() {
       setConcerts(response.data);
       setError("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch events");
+      setError(err instanceof Error ? err.message : "โหลดข้อมูล event ล้มเหลว");
       console.error("Error fetching events:", err);
     } finally {
       setLoading(false);
@@ -60,14 +59,16 @@ export default function DashboardPage() {
     if (!selectedConcert) return;
 
     try {
+      setError("");
       await eventsApi.delete(selectedConcert.id);
-      setSuccessMessage(`Successfully deleted "${selectedConcert.title}"`);
+      setSuccessMessage(`ลบ "${selectedConcert.title}" สำเร็จ`);
       setTimeout(() => setSuccessMessage(""), 3000);
-      closeDeleteModal();
-      fetchEvents(); // Refresh the list
+      fetchEvents();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete event");
+      setError(err instanceof Error ? err.message : "ลบ event ล้มเหลว กรุณาลองใหม่");
       console.error("Error deleting event:", err);
+    } finally {
+      closeDeleteModal();
     }
   };
 
@@ -75,34 +76,31 @@ export default function DashboardPage() {
     e.preventDefault();
 
     if (!concertTitle || !totalSeats || !description) {
-      setError("Please fill in all fields");
+      setError("กรุณากรอกข้อมูลให้ครบทุกช่อง");
       return;
     }
 
     try {
+      setError("");
       await eventsApi.create({
         title: concertTitle,
         description,
-        venueId: parseInt(venueId),
         totalSeats: parseInt(totalSeats),
       });
 
-      setSuccessMessage("Event created successfully!");
+      setSuccessMessage("สร้าง event สำเร็จ!");
       setTimeout(() => setSuccessMessage(""), 3000);
 
       // Reset form
       setConcertTitle("");
       setTotalSeats("");
       setDescription("");
-      setStartDate("");
-      setEndDate("");
-      setVenueId("1");
 
       // Switch to overview tab and refresh
       setActiveTab("overview");
       fetchEvents();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create event");
+      setError(err instanceof Error ? err.message : "สร้าง event ล้มเหลว กรุณาลองใหม่");
       console.error("Error creating event:", err);
     }
   };
@@ -136,7 +134,7 @@ export default function DashboardPage() {
               <span>History</span>
             </a>
             <a
-              href="#"
+              href="/home"
               className="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <Users size={20} />
@@ -217,13 +215,13 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Queue */}
+            {/* Reserve */}
             <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-lg p-6 text-white shadow-lg">
               <div className="flex items-center justify-center mb-2">
                 <Users size={24} />
               </div>
               <div className="text-center">
-                <p className="text-sm opacity-90 mb-1">Queue</p>
+                <p className="text-sm opacity-90 mb-1">Reserve</p>
                 <p className="text-4xl font-bold">120</p>
               </div>
             </div>
