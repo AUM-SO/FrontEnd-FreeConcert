@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Home, History, Users, LogOut, Armchair, Trash2 } from "lucide-react";
+import { Armchair, Trash2, Users } from "lucide-react";
 import { eventsApi, bookingsApi, Event, Booking } from "@/lib/api";
 import { useAuth } from "@/contexts/auth-context";
+import Toast from "@/components/Toast";
+import Sidebar from "@/components/Sidebar";
 
 export default function DashboardPage() {
   const { logout } = useAuth();
@@ -118,61 +120,17 @@ export default function DashboardPage() {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 transition-transform duration-200 ease-in-out`}
-      >
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="p-6 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-800">Admin</h1>
-          </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
-            <a
-              href="/dashboard"
-              className="flex items-center gap-3 px-4 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              <Home size={20} />
-              <span>Home</span>
-            </a>
-            <a
-              href="/history"
-              className="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <History size={20} />
-              <span>History</span>
-            </a>
-            <a
-              href="/home"
-              className="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <Users size={20} />
-              <span>Switch to user</span>
-            </a>
-          </nav>
-
-          {/* Logout */}
-          <div className="p-4 border-t border-gray-200">
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-3 px-4 py-3 w-full text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <LogOut size={20} />
-              <span>Logout</span>
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      {/* Overlay for mobile */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+      <Toast
+        successMessage={successMessage}
+        errorMessage={error}
+        onCloseSuccess={() => setSuccessMessage("")}
+        onCloseError={() => setError("")}
+      />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        onLogout={handleLogout}
+      />
 
       {/* Main Content */}
       <main className="flex-1 w-full lg:w-auto">
@@ -199,18 +157,6 @@ export default function DashboardPage() {
         </div>
 
         <div className="p-4 md:p-8 max-w-8xl mx-auto">
-          {/* Success/Error Messages */}
-          {successMessage && (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
-              {successMessage}
-            </div>
-          )}
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-              {error}
-            </div>
-          )}
-
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
             {/* Total of seats */}
@@ -298,7 +244,7 @@ export default function DashboardPage() {
             {/* Tab Content */}
             {activeTab === "overview" ? (
               /* Concert List */
-              <div className="p-4 md:p-6 space-y-4">
+              <div className="p-4 md:p-6 space-y-4 h-[70vh] overflow-y-auto">
                 {loading ? (
                   <div className="text-center py-8">
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>

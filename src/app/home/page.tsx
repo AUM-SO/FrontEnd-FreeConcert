@@ -1,22 +1,41 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Home, History, Users, LogOut, Armchair, Ticket } from "lucide-react";
+import { Armchair, Ticket, XCircle } from "lucide-react";
 import { eventsApi, bookingsApi, Event } from "@/lib/api";
 import { useAuth } from "@/contexts/auth-context";
+import Toast from "@/components/Toast";
+import Sidebar from "@/components/Sidebar";
 
 export default function HomePage() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [concerts, setConcerts] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [reservingId, setReservingId] = useState<number | null>(null);
+  const [activeBookingsByEvent, setActiveBookingsByEvent] = useState<Map<number, number>>(new Map());
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchEvents();
+    fetchUserBookings();
   }, []);
+
+  const fetchUserBookings = async () => {
+    try {
+      const myBookings = await bookingsApi.getAll();
+      const map = new Map(
+        myBookings
+          .filter((b) => b.status !== "cancelled")
+          .map((b) => [b.eventId, b.id]),
+      );
+      setActiveBookingsByEvent(map);
+    } catch {
+      // ถ้าโหลดไม่ได้ ให้ยังคงใช้งานได้ตามปกติ
+    }
+  };
 
   const fetchEvents = async () => {
     try {
@@ -35,8 +54,6 @@ export default function HomePage() {
   const handleReserve = async (concert: Event) => {
     if (reservingId !== null) return;
 
-    console.log('concert --> ', concert);
-
     if (concert.availableSeats <= 0) {
       setSuccessMessage("");
       setError("ที่นั่งเต็มแล้ว");
@@ -50,13 +67,12 @@ export default function HomePage() {
 
       // Fetch available seats and pick the first one
       const availableSeats = await eventsApi.getSeats(concert.id, "available");
-      // console.log('availableSeats for concert', concert.id, availableSeats);
       
       if (availableSeats.length === 0) {
         setError("ไม่มีที่นั่งว่างแล้ว");
         return;
       }
-
+ 
       await bookingsApi.create({
         eventId: concert.id,
         seatId: availableSeats[0].id,
@@ -64,6 +80,7 @@ export default function HomePage() {
       setSuccessMessage(`จองที่นั่ง "${concert.title}" สำเร็จ!`);
       setTimeout(() => setSuccessMessage(""), 3000);
       fetchEvents();
+      fetchUserBookings();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "จองที่นั่งล้มเหลว กรุณาลองใหม่",
@@ -74,70 +91,46 @@ export default function HomePage() {
     }
   };
 
+  const handleCancel = async (concert: Event) => {
+    const bookingId = activeBookingsByEvent.get(concert.id);
+    if (!bookingId || cancellingId !== null) return;
+
+    try {
+      setError("");
+      setSuccessMessage("");
+      setCancellingId(bookingId);
+      await bookingsApi.cancel(bookingId);
+      setSuccessMessage(`ยกเลิกการจอง "${concert.title}" สำเร็จ!`);
+      setTimeout(() => setSuccessMessage(""), 3000);
+      fetchEvents();
+      fetchUserBookings();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "ยกเลิกการจองล้มเหลว กรุณาลองใหม่",
+      );
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
   const handleLogout = () => {
     logout();
   };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 transition-transform duration-200 ease-in-out`}
-      >
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="p-6 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-800">FreeConcert</h1>
-            {user && <p className="text-sm text-gray-500 mt-1">{user.name}</p>}
-          </div>
+      <Toast
+        successMessage={successMessage}
+        errorMessage={error}
+        onCloseSuccess={() => setSuccessMessage("")}
+        onCloseError={() => setError("")}
+      />
 
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
-            <a
-              href="/home"
-              className="flex items-center gap-3 px-4 py-3 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              <Home size={20} />
-              <span>Home</span>
-            </a>
-            <a
-              href="/history"
-              className="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <History size={20} />
-              <span>History</span>
-            </a>
-            {user?.role === "admin" && (
-              <a
-                href="/dashboard"
-                className="flex items-center gap-3 px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <Users size={20} />
-                <span>Switch to admin</span>
-              </a>
-            )}
-          </nav>
-
-          {/* Logout */}
-          <div className="p-4 border-t border-gray-200">
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-3 px-4 py-3 w-full text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <LogOut size={20} />
-              <span>Logout</span>
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      {/* Overlay for mobile */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        onLogout={handleLogout}
+      />
 
       {/* Main Content */}
       <main className="flex-1 w-full lg:w-auto">
@@ -164,18 +157,6 @@ export default function HomePage() {
         </div>
 
         <div className="p-4 md:p-8 max-w-8xl mx-auto">
-          {/* Success/Error Messages */}
-          {successMessage && (
-            <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
-              {successMessage}
-            </div>
-          )}
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-              {error}
-            </div>
-          )}
-
           {/* Concert List */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="border-b border-gray-200 px-6 py-4">
@@ -184,7 +165,7 @@ export default function HomePage() {
               </h2>
             </div>
 
-            <div className="p-4 md:p-6 space-y-4">
+            <div className="p-4 md:p-6 space-y-4 h-[85vh] overflow-y-auto">
               {loading ? (
                 <div className="text-center py-8">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -225,22 +206,35 @@ export default function HomePage() {
                           {concert.status}
                         </span>
                       </div>
-                      <button
-                        onClick={() => handleReserve(concert)}
-                        disabled={
-                          concert.availableSeats <= 0 ||
-                          concert.status !== "published" ||
-                          reservingId !== null
-                        }
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
-                      >
-                        <Ticket size={16} />
-                        {reservingId === concert.id
-                          ? "Reserving..."
-                          : concert.availableSeats <= 0
-                            ? "Full"
-                            : "Reserve"}
-                      </button>
+                      {activeBookingsByEvent.has(concert.id) ? (
+                        <button
+                          onClick={() => handleCancel(concert)}
+                          disabled={cancellingId !== null}
+                          className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                          <XCircle size={16} />
+                          {cancellingId === activeBookingsByEvent.get(concert.id)
+                            ? "Cancelling..."
+                            : "Cancel"}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleReserve(concert)}
+                          disabled={
+                            concert.availableSeats <= 0 ||
+                            concert.status !== "published" ||
+                            reservingId !== null
+                          }
+                          className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+                        >
+                          <Ticket size={16} />
+                          {reservingId === concert.id
+                            ? "Reserving..."
+                            : concert.availableSeats <= 0
+                              ? "Full"
+                              : "Reserve"}
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))
