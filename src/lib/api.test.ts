@@ -332,15 +332,15 @@ describe('bookingsApi', () => {
       expect(JSON.parse(options.body as string)).toEqual({ eventId: 2, seatId: 3 });
     });
 
-    it('throws ApiError on 400 when user already has a booking', async () => {
+    it('throws ApiError on 400 when user already has a booking for the same event', async () => {
       mockFetch.mockResolvedValueOnce(
-        makeResponse({ message: 'คุณมีการจองที่นั่งอยู่แล้ว ไม่สามารถจองเพิ่มได้' }, 400)
+        makeResponse({ message: 'คุณได้จอง event นี้ไปแล้ว ไม่สามารถจองซ้ำได้' }, 400)
       );
 
       const err = await bookingsApi.create({ eventId: 1, seatId: 1 }).catch(e => e) as ApiError;
       expect(err).toBeInstanceOf(ApiError);
       expect(err.status).toBe(400);
-      expect(err.message).toBe('คุณมีการจองที่นั่งอยู่แล้ว ไม่สามารถจองเพิ่มได้');
+      expect(err.message).toBe('คุณได้จอง event นี้ไปแล้ว ไม่สามารถจองซ้ำได้');
     });
   });
 
