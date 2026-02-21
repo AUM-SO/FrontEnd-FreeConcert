@@ -35,13 +35,17 @@ export default function LoginPage() {
       const user = await login(email, password);
 
       // Redirect based on user role
-      if (user.role === 'admin') {
+      if (user.role === "admin") {
         router.push("/dashboard");
       } else {
         router.push("/home");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "เข้าสู่ระบบล้มเหลว กรุณาลองใหม่อีกครั้ง");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "เข้าสู่ระบบล้มเหลว กรุณาลองใหม่อีกครั้ง",
+      );
     } finally {
       setLoading(false);
     }
@@ -49,7 +53,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {/* <Navbar /> */}
 
       <div className="container mx-auto flex items-center justify-center min-h-screen px-4 py-20">
         <Card className="w-full max-w-md">
@@ -75,7 +79,9 @@ export default function LoginPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">อีเมล</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="email">อีเมล</Label>
+                </div>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -93,12 +99,6 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">รหัสผ่าน</Label>
-                  <Link
-                    href="/forgot-password"
-                    className="text-sm text-primary hover:underline"
-                  >
-                    ลืมรหัสผ่าน?
-                  </Link>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -120,7 +120,7 @@ export default function LoginPage() {
                 {loading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
               </Button>
 
-              <div className="text-center text-sm text-muted-foreground">
+              {/* <div className="text-center text-sm text-muted-foreground">
                 ยังไม่มีบัญชี?{" "}
                 <Link
                   href="/signup"
@@ -128,7 +128,7 @@ export default function LoginPage() {
                 >
                   ลงทะเบียนที่นี่
                 </Link>
-              </div>
+              </div> */}
             </CardFooter>
           </form>
         </Card>

@@ -6,7 +6,10 @@
       "Bash(npx tsc:*)",
       "Bash(npx next build:*)",
       "Bash(npm run build:*)",
-      "Bash(npx next lint)"
+      "Bash(npx next lint)",
+      "Bash(bun add:*)",
+      "Bash(bun run test:*)",
+      "Bash(npm test:*)"
     ]
   }
 }

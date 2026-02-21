@@ -1,10 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
+
 interface ToastProps {
   successMessage?: string;
   errorMessage?: string;
   onCloseSuccess?: () => void;
   onCloseError?: () => void;
+  duration?: number;
 }
 
 export default function Toast({
@@ -12,7 +15,22 @@ export default function Toast({
   errorMessage,
   onCloseSuccess,
   onCloseError,
+  duration = 3000,
 }: ToastProps) {
+  useEffect(() => {
+    if (successMessage && onCloseSuccess) {
+      const timer = setTimeout(onCloseSuccess, duration);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage, onCloseSuccess, duration]);
+
+  useEffect(() => {
+    if (errorMessage && onCloseError) {
+      const timer = setTimeout(onCloseError, duration);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage, onCloseError, duration]);
+
   if (!successMessage && !errorMessage) return null;
 
   return (

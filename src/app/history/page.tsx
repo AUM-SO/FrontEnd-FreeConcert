@@ -43,7 +43,6 @@ export default function HistoryPage() {
       setCancellingId(bookingId);
       await bookingsApi.cancel(bookingId);
       setSuccessMessage("ยกเลิกการจองสำเร็จ!");
-      setTimeout(() => setSuccessMessage(""), 3000);
       fetchBookings();
     } catch (err) {
       setError(
@@ -126,10 +125,10 @@ export default function HistoryPage() {
                           {new Date(booking.createdAt).toLocaleString()}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          {booking.user?.name || 'N/A'}
+                          {booking.username}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          {booking.event?.title || 'N/A'}
+                          {booking.concertName}
                         </td>
                         <td className="px-6 py-4 text-sm">
                           <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -172,12 +171,12 @@ export default function HistoryPage() {
                     <div className="flex justify-between items-start">
                       <span className="text-xs font-medium text-gray-500">Username</span>
                       <span className="text-sm text-gray-900">
-                        {booking.user?.name || 'N/A'}
+                        {booking.username}
                       </span>
                     </div>
                     <div className="flex justify-between items-start">
                       <span className="text-xs font-medium text-gray-500">Concert name</span>
-                      <span className="text-sm text-gray-900">{booking.event?.title || 'N/A'}</span>
+                      <span className="text-sm text-gray-900">{booking.concertName}</span>
                     </div>
                     <div className="flex justify-between items-start">
                       <span className="text-xs font-medium text-gray-500">Status</span>

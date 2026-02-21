@@ -78,7 +78,6 @@ export default function HomePage() {
         seatId: availableSeats[0].id,
       });
       setSuccessMessage(`จองที่นั่ง "${concert.title}" สำเร็จ!`);
-      setTimeout(() => setSuccessMessage(""), 3000);
       fetchEvents();
       fetchUserBookings();
     } catch (err) {
@@ -101,7 +100,6 @@ export default function HomePage() {
       setCancellingId(bookingId);
       await bookingsApi.cancel(bookingId);
       setSuccessMessage(`ยกเลิกการจอง "${concert.title}" สำเร็จ!`);
-      setTimeout(() => setSuccessMessage(""), 3000);
       fetchEvents();
       fetchUserBookings();
     } catch (err) {

@@ -75,7 +75,6 @@ export default function DashboardPage() {
       setError("");
       await eventsApi.delete(selectedConcert.id);
       setSuccessMessage(`ลบ "${selectedConcert.title}" สำเร็จ`);
-      setTimeout(() => setSuccessMessage(""), 3000);
       fetchEvents();
     } catch (err) {
       setError(err instanceof Error ? err.message : "ลบ event ล้มเหลว กรุณาลองใหม่");
@@ -102,7 +101,6 @@ export default function DashboardPage() {
       });
 
       setSuccessMessage("สร้าง event สำเร็จ!");
-      setTimeout(() => setSuccessMessage(""), 3000);
 
       // Reset form
       setConcertTitle("");

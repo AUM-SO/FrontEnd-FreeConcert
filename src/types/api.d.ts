@@ -76,15 +76,12 @@ export interface Booking {
   userId: number;
   eventId: number;
   seatId: number;
+  username: string;
+  concertName: string;
   status: string;
+  bookingCode: string;
   createdAt: string;
   updatedAt: string;
-  event?: Event;
-  user?: {
-    id: number;
-    email: string;
-    name: string;
-  };
 }
 
 export interface CreateBookingRequest {
@@ -98,7 +95,6 @@ export interface CreateBookingRequest {
 
 export interface Seat {
   id: number;
-  venueId: number;
   eventId: number;
   section: string;
   row: string;
